@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Guess | Number Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --bg-dark: #0b0b1a;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --accent-cyan: #00f2fe;
+            --accent-pink: #fe0979;
+            --accent-green: #00ff88;
+            --accent-orange: #ff9d00;
+            --accent-blue: #4facfe;
+            --accent-red: #ff416c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- ANIMATED BACKGROUND BLOBS --- */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            z-index: 0;
+            animation: float 15s infinite ease-in-out;
+        }
+        .blob-1 { width: 400px; height: 400px; background: var(--accent-pink); top: -100px; left: -100px; }
+        .blob-2 { width: 500px; height: 500px; background: var(--accent-cyan); bottom: -150px; right: -150px; animation-delay: -5s; }
+        .blob-3 { width: 300px; height: 300px; background: var(--accent-blue); top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: -10s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        /* --- MAIN GLASS CARD --- */
+        .game-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s ease;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 300;
+        }
+
+        /* --- STATS --- */
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* --- INPUT AREA --- */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.3s ease;
+            -moz-appearance: textfield; /* Hide arrows in Firefox */
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"]:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+        }
+
+        button {
+            padding: 16px 24px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* --- FEEDBACK MESSAGE --- */
+        .feedback {
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .feedback.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- HISTORY --- */
+        .history-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        .history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-height: 80px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .history-list::-webkit-scrollbar { width: 4px; }
+        .history-list::-webkit-scrollbar-track { background: transparent; }
+        .history-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        .history-chip {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* --- WIN STATE --- */
+        .game-container.won {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.2);
+        }
+        .game-container.won button {
+            background: linear-gradient(135deg, var(--accent-green), #00b8ff);
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        }
+
+        /* --- SHAKE ANIMATION --- */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.4s ease; }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 480px) {
+            .game-container { margin: 20px; padding: 30px 20px; }
+            .header h1 { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <!-- Main Game UI -->
+    <div class="game-container" id="gameContainer">
+        <div class="header">
+            <h1>Neon Guess</h1>
+            <p>Find the hidden number between 1 and 100</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">Attempts</div>
+                <div class="stat-value" id="attempts">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Range</div>
+                <div class="stat-value" id="range">1 - 100</div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="input-wrapper">
+                <input type="number" id="guessInput" min="1" max="100" placeholder="Enter 1-100" autocomplete="off">
+            </div>
+            <button id="guessBtn" onclick="makeGuess()">Guess</button>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div class="history-title">Recent Guesses</div>
+        <div class="history-list" id="historyList"></div>
+    </div>
+
+    <script>
+        // --- GAME STATE ---
+        let secretNumber = Math.floor(Math.random() * 100) + 1;
+        let attempts = 0;
+        let isGameOver = false;
+        let minRange = 1;
+        let maxRange = 100;
+
+        // --- DOM ELEMENTS ---
+        const guessInput = document.getElementById('guessInput');
+        const guessBtn = document.getElementById('guessBtn');
+        const feedback = document.getElementById('feedback');
+        const attemptsDisplay = document.getElementById('attempts');
+        const rangeDisplay = document.getElementById('range');
+        const historyList = document.getElementById('historyList');
+        const gameContainer = document.getElementById('gameContainer');
+
+        // --- CORE LOGIC ---
+        function makeGuess() {
+            if (isGameOver) return;
+
+            const guess = parseInt(guessInput.value);
+
+            // Validation
+            if (isNaN(guess) || guess < 1 || guess > 100) {
+                showError("Please enter a valid number (1-100)");
+                shakeInput();
+                return;
+            }
+
+            if (guess < minRange || guess > maxRange) {
+                showError(`Out of bounds! Try ${minRange}-${maxRange}`);
+                shakeInput();
+                return;
+            }
+
+            attempts++;
+            attemptsDisplay.textContent = attempts;
+            
+            const distance = Math.abs(guess - secretNumber);
+            let message = "";
+            let color = "";
+
+            // Temperature Mechanic (Creative UX)
+            if (guess === secretNumber) {
+                message = `🎉 Perfect! You got it in ${attempts} tries!`;
+                color = "var(--accent-green)";
+                winGame();
+            } else if (distance <= 3) {
+                message = guess < secretNumber ? "🌋 Burning! Go Higher" : "🌋 Burning! Go Lower";
+                color = "var(--accent-red)";
+            } else if (distance <= 10) {
+                message = guess < secretNumber ? "🔥 Hot! Go Higher" : "🔥 Hot! Go Lower";
+                color = "var(--accent-orange)";
+            } else if (distance <= 25) {
+                message = guess < secretNumber ? "🌤️ Warm. Go Higher" : "🌤️ Warm. Go Lower";
+                color = "var(--accent-blue)";
+            } else if (distance <= 45) {
+                message = guess < secretNumber ? "🧊 Cold. Go Higher" : "🧊 Cold. Go Lower";
+                color = "var(--accent-cyan)";
+            } else {
+                message = guess < secretNumber ? "🥶 Freezing! Go Higher" : "🥶 Freezing! Go Lower";
+                color = "#a0a0b0";
+            }
+
+            // Update UI
+            showFeedback(message, color);
+            addHistoryChip(guess, color);
+            updateRange(guess);
+            
+            // Clear input
+            guessInput.value = '';
+            guessInput.focus();
+        }
+
+        function updateRange(guess) {
+            if (guess < secretNumber && guess >= minRange) {
+                minRange = guess + 1;
+            } else if (guess > secretNumber && guess <= maxRange) {
+                maxRange = guess - 1;
+            }
+            rangeDisplay.textContent = `${minRange} - ${maxRange}`;
+        }
+
+        function winGame() {
+            isGameOver = true;
+            guessBtn.textContent = "Play Again";
+            guessBtn.disabled = false; // Re-enable to allow restart
+            guessInput.disabled = true;
+            gameContainer.classList.add('won');
+            
+            // Override button click for restart
+            guessBtn.onclick = resetGame;
+        }
+
+        function resetGame() {
+            secretNumber = Math.floor(Math.random() * 100) + 1;
+            attempts = 0;
+            isGameOver = false;
+            minRange = 1;
+            maxRange = 100;
+
+            attemptsDisplay.textContent = '0';
+            rangeDisplay.textContent = '1 - 100';
+            feedback.classList.remove('show');
+            historyList.innerHTML = '';
+            guessInput.disabled = false;
+            guessInput.value = '';
+            guessInput.focus();
+            
+            gameContainer.classList.remove('won');
+            guessBtn.textContent = "Guess";
+            guessBtn.onclick = makeGuess;
+        }
+
+        // --- UI HELPERS ---
+        function showFeedback(text, color) {
+            feedback.textContent = text;
+            feedback.style.color = color;
+            feedback.classList.remove('show');
+            // Trigger reflow to restart animation
+            void feedback.offsetWidth; 
+            feedback.classList.add('show');
+        }
+
+        function showError(text) {
+            showFeedback(`⚠️ ${text}`, "var(--accent-pink)");
+        }
+
+        function addHistoryChip(number, color) {
+            const chip = document.createElement('div');
+            chip.className = 'history-chip';
+            chip.textContent = number;
+            chip.style.borderColor = color;
+            chip.style.color = color;
+            historyList.prepend(chip); // Add to beginning
+        }
+
+        function shakeInput() {
+            guessInput.classList.add('shake');
+            setTimeout(() => guessInput.classList.remove('shake'), 400);
+        }
+
+        // --- EVENT LISTENERS ---
+        guessInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') makeGuess();
+        });
+
+        // Focus input on load
+        window.addEventListener('load', () => guessInput.focus());
+    </script>
+</body>
+</html>
