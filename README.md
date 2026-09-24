@@ -31,3 +31,5 @@ A modern, highly interactive, and visually stunning web-based number guessing ga
 
 ## 🚀 How to Run
  open the link below
+
+ https://alexos01.github.io/NumberGuessingGame/
